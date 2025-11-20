@@ -1,0 +1,73 @@
+---
+# tasks file for nginx
+- name: Upgrade the os repos
+  apt:
+    autoremove: true
+    autoclean: true
+    state: latest
+    update_cache: yes
+    upgrade: dist
+
+- name: install packages
+  apt: 
+    - unzip
+    - curl
+    - wget
+    - ca-certificates
+
+- name: Install nginx
+  apt:
+    name: nginx
+    state: latest
+    update_cache: yes
+
+- name: start the nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Copy static index.html file
+  template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    mode: '0644'
+  notify: restart nginx
+
+- name: Install UFW
+  apt:
+    name: ufw 
+    state: latest
+    update_cache: yes
+
+- name: Allow the ports
+  ufw:
+    rule: allow 
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - 22
+    - 80
+    - 443
+
+- name: enable the firewall
+  ufw:
+    state: enabled
+
+- name: Harden SSH config - disable root login and password auth
+  become: true
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    validate: 'sshd -t -f %s'
+  loop:
+    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+  notify: Restart SSH Service
+
+- name: Start and enable nginx service
+  service:
+    name: nginx
+    state: started
+    enabled: yes
