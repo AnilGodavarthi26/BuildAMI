@@ -10,10 +10,12 @@
 
 - name: install packages
   apt: 
-    - unzip
-    - curl
-    - wget
-    - ca-certificates
+    with_items:
+      - unzip
+      - curl
+      - wget
+      - ca-certificates
+    state: latest
 
 - name: Install nginx
   apt:
