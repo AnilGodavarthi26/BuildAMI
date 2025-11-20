@@ -50,6 +50,8 @@ source "amazon-ebs" "tagging" {
   source_ami     = data.amazon-ami.sourceAMI.id
   instance_type  = var.instance_type
   ssh_username   = "ubuntu"
+  ssh_timeout       = "20m"
+  ssh_agent_auth    = true
   ami_name       = "Tagging-AMI-{{timestamp}}"
   encrypt_boot   = true
 
@@ -68,5 +70,8 @@ build {
 
   provisioner "ansible" {
     playbook_file = "ansible/playbook.yml"
+    extra_arguments = [
+    "--scp-extra-args", "'-O'"
+  ]
   }
 }
